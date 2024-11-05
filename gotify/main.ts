@@ -86,11 +86,16 @@ async function handle_alert(alert: Types.Alert) {
             break;
     }
 
+
+    const titleStr = title.join(' ');
+    const messageStr = message.length > 0 ? message.join(' ') : '';
+    console.log(`${titleStr}${messageStr === '' ? '(No Message)' : ` => ${messageStr}`}`);
+
     await gotify({
         server: GOTIFY_URL,
         app: GOTIFY_API_KEY,
-        title: title.join(' '),
-        message: message.length > 0 ? message.join(' ') : '',
+        title: titleStr,
+        message: messageStr,
         priority,
       });
 }
