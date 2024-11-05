@@ -11,4 +11,4 @@ USER deno
 # These steps will be re-run upon each file change in your working directory:
 COPY . .
 
-CMD ["run", "--allow-net", "main.ts"]
+CMD ["run", "--allow-net", "--allow-env", "main.ts"]
