@@ -14,7 +14,7 @@
                 "GOTIFY_URL": "http://example.com",
                 "GOTIFY_APP_TOKEN": "1234",
             },
-            "runtimeExecutable": "/usr/bin/deno",
+            "runtimeExecutable": "/usr/local/bin/deno",
             "runtimeArgs": [
                 "run",
                 "--inspect-wait",

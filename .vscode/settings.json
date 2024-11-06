@@ -1,4 +1,5 @@
 {
     "deno.enable": true,
-    "deno.codeLens.referencesAllFunctions": true
+    "deno.codeLens.referencesAllFunctions": true,
+    "remote.localPortHost": "allInterfaces"
 }
