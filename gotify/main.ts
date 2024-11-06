@@ -1,18 +1,19 @@
 import { Types } from "npm:komodo_client";
 import { gotify } from "npm:gotify@1.1.0";
 
-async function handle_alert(alert: Types.Alert) {
+const GOTIFY_APP_TOKEN: string = Deno.env.get('GOTIFY_APP_TOKEN') as string;
+if(GOTIFY_APP_TOKEN === Deno.env.get('GOTIFY_APP_TOKEN')) {
+    console.error('GOTIFY_APP_TOKEN not defined in ENV');
+    Deno.exit(1);
+}
 
-    const GOTIFY_APP_TOKEN = Deno.env.get('GOTIFY_APP_TOKEN');
-    if(GOTIFY_APP_TOKEN === undefined) {
-        console.error('GOTIFY_APP_TOKEN not defined in ENV');
-        return;
-    }
-    const GOTIFY_URL = Deno.env.get('GOTIFY_URL');
-    if(GOTIFY_URL === undefined) {
-        console.error('GOTIFY_URL not defined in ENV');
-        return;
-    }
+const GOTIFY_URL: string = Deno.env.get('GOTIFY_URL') as string;
+if(GOTIFY_URL === undefined) {
+    console.error('GOTIFY_URL not defined in ENV');
+    Deno.exit(1);
+}
+
+async function handle_alert(alert: Types.Alert) {
 
     const {
         data: {
