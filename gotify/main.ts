@@ -2,15 +2,35 @@ import { Types } from "npm:komodo_client";
 import { gotify } from "npm:gotify@1.1.0";
 
 const GOTIFY_APP_TOKEN: string = Deno.env.get('GOTIFY_APP_TOKEN') as string;
-if(GOTIFY_APP_TOKEN === Deno.env.get('GOTIFY_APP_TOKEN')) {
+if(GOTIFY_APP_TOKEN === undefined || GOTIFY_APP_TOKEN.trim() === '') {
     console.error('GOTIFY_APP_TOKEN not defined in ENV');
     Deno.exit(1);
 }
 
 const GOTIFY_URL: string = Deno.env.get('GOTIFY_URL') as string;
-if(GOTIFY_URL === undefined) {
+if(GOTIFY_URL === undefined || GOTIFY_URL.trim() === '') {
     console.error('GOTIFY_URL not defined in ENV');
     Deno.exit(1);
+}
+
+const severityLevelPriority: Record<Types.SeverityLevel, number> = {
+    [Types.SeverityLevel.Ok]: 3,
+    [Types.SeverityLevel.Warning]: 5,
+    [Types.SeverityLevel.Critical]: 8,
+}
+
+for(const [level, defaultPriority] of Object.entries(severityLevelPriority)) {
+    const envLevel = `GOTIFY_${level}_PRIORITY`;
+    const envLevelVal = Deno.env.get(envLevel);
+    if(envLevelVal !== undefined && envLevelVal.trim() !== '') {
+        const intVal = parseInt(envLevelVal);
+        if(isNaN(intVal)) {
+            console.warn(`Value of "${envLevelVal}" for ENV ${envLevel} could not be parsed as integer. Using default priority instead`);
+        } else {
+            severityLevelPriority[level as Types.SeverityLevel] = intVal;
+        }
+    }
+    console.log(`Using Gotify priority ${severityLevelPriority[level as Types.SeverityLevel]} for Komodo severity level "${level}"`);
 }
 
 async function handle_alert(alert: Types.Alert) {
@@ -74,20 +94,6 @@ async function handle_alert(alert: Types.Alert) {
         }
     }
 
-    let priority = 0;
-    switch(alert.level) {
-        case Types.SeverityLevel.Ok:
-            priority = 3;
-            break;
-        case Types.SeverityLevel.Warning:
-            priority = 5;
-            break;
-        case Types.SeverityLevel.Critical:
-            priority = 8;
-            break;
-    }
-
-
     const titleStr = title.join(' ');
     const messageStr = message.length > 0 ? message.join(' ') : '';
     console.log(`${titleStr}${messageStr === '' ? '(No Message)' : ` => ${messageStr}`}`);
@@ -97,7 +103,7 @@ async function handle_alert(alert: Types.Alert) {
         app: GOTIFY_APP_TOKEN,
         title: titleStr,
         message: messageStr,
-        priority,
+        priority: severityLevelPriority[alert.level],
       });
 }
 
