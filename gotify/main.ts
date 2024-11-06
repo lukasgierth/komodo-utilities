@@ -3,9 +3,9 @@ import { gotify } from "npm:gotify@1.1.0";
 
 async function handle_alert(alert: Types.Alert) {
 
-    const GOTIFY_API_KEY = Deno.env.get('GOTIFY_API_KEY');
-    if(GOTIFY_API_KEY === undefined) {
-        console.error('GOTIFY_API_KEY not defined in ENV');
+    const GOTIFY_APP_TOKEN = Deno.env.get('GOTIFY_APP_TOKEN');
+    if(GOTIFY_APP_TOKEN === undefined) {
+        console.error('GOTIFY_APP_TOKEN not defined in ENV');
         return;
     }
     const GOTIFY_URL = Deno.env.get('GOTIFY_URL');
@@ -93,7 +93,7 @@ async function handle_alert(alert: Types.Alert) {
 
     await gotify({
         server: GOTIFY_URL,
-        app: GOTIFY_API_KEY,
+        app: GOTIFY_APP_TOKEN,
         title: titleStr,
         message: messageStr,
         priority,

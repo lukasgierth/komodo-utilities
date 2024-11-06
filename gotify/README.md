@@ -5,7 +5,7 @@ A [Komodo](https://komo.do/) [Alerter](https://komo.do/docs/resources#alerter) f
 Create a new container or stack with:
 
 * Gotify URL as env `GOTIFY_URL`
-* Gotify App Token as env `GOTIFY_API_KEY`
+* Gotify App Token as env `GOTIFY_APP_TOKEN`
 
 ```yaml
 
@@ -14,7 +14,7 @@ services:
     image: foxxmd/komodo-gotify-alerter:latest
     environment:
       - GOTIFY_URL=${GOTIFY_URL}
-      - GOTIFY_API_KEY=${GOTIFY_API_KEY}
+      - GOTIFY_APP_TOKEN=${GOTIFY_APP_TOKEN}
     ports:
       - "7000:7000"
 ```
