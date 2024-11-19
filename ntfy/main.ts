@@ -1,5 +1,5 @@
 import { Types } from "npm:komodo_client";
-import { Config, publish } from "npm:ntfy@1.6.3";
+import { Config, publish } from "npm:ntfy@1.7.0";
 
 const NTFY_URL: string = Deno.env.get("NTFY_URL") as string;
 if (NTFY_URL === undefined || NTFY_URL.trim() === "") {
@@ -26,13 +26,16 @@ if (NTFY_PASSWORD !== undefined && NTFY_PASSWORD.trim() === "") {
     NTFY_PASSWORD = undefined;
 }
 let NTFY_TOKEN: string | undefined = Deno.env.get("NTFY_TOKEN");
-if (NTFY_TOKEN !== undefined) {
-    if(NTFY_TOKEN.trim() === "") {
-        NTFY_TOKEN = undefined;
-    } else {
-        console.error("NTFY_TOKEN is not yet supported");
-        Deno.exit(1);
-    }
+if (NTFY_TOKEN !== undefined && NTFY_TOKEN.trim() === "") {
+    NTFY_TOKEN = undefined;
+}
+
+if(NTFY_USER !== undefined && NTFY_PASSWORD !== undefined) {
+    console.log('Using User/Password Authentication');
+} else if(NTFY_TOKEN !== undefined) {
+    console.log('Using Token Authentication');
+} else {
+    console.log('No Authentication specified');
 }
 
 const severityLevelPriority: Record<Types.SeverityLevel, number> = {
@@ -162,6 +165,8 @@ async function handle_alert(alert: Types.Alert) {
                 username: NTFY_USER,
                 password: NTFY_PASSWORD
             }
+        } else if(NTFY_TOKEN !== undefined) {
+            req.authorization = NTFY_TOKEN;   
         }
         await publish(req);
     } catch (e) {
