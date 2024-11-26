@@ -113,12 +113,13 @@ export const parseAlert = (
         });
     } finally {
         titleStr = title.join(" ");
-        subtitleStr = subtitle.length > 0 ? subtitle.join(" ") : "";
-        messageStr = message.length > 0 ? message.join(" ") : "";
+        subtitleStr = subtitle.length > 0 ? subtitle.join(" ") : "(None)";
+        messageStr = message.length > 0 ? message.join(" ") : "(None)";
         console.log(
-            `Alert Summary => ${titleStr}${
-                subtitleStr !== "" ? ` ${subtitleStr}` : ""
-            }${messageStr === "" ? "(No Message)" : ` => ${messageStr}`}`,
+            `== Alert Summary ==
+Title    : ${titleStr}
+Subtitle : ${subtitleStr}
+Message  : ${messageStr}`,
         );
     }
 };
