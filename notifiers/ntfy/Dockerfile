@@ -9,6 +9,8 @@ WORKDIR /app
 USER deno
 
 # These steps will be re-run upon each file change in your working directory:
-COPY . .
+    COPY common/ common/
+    COPY notifiers/common/ notifiers/common/
+    COPY notifiers/ntfy/ notifiers/ntfy/
 
-CMD ["run", "--allow-net", "--allow-env", "main.ts"]
+CMD ["run", "--allow-net", "--allow-env", "notifiers/ntfy/main.ts"]

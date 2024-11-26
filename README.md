@@ -4,10 +4,10 @@ Small utilities to enhance [Komodo](https://komo.do)
 
 An [Alerter](https://komo.do/docs/resources#alerter) that pushes to [Gotify](https://gotify.net/)
 
-[See README](/gotify/README.md)
+[See README](/notifiers/gotify/README.md)
 
 ## ntfy Alerter
 
 An [Alerter](https://komo.do/docs/resources#alerter) that pushes to [ntfy](https://ntfy.sh/)
 
-[See README](/ntfy/README.md)
+[See README](/notifiers/ntfy/README.md)

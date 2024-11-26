@@ -1,0 +1,10 @@
+{
+    "level": "CRITICAL",
+    "data": {
+        "type": "ServerCpu",
+        "data": {
+            "percentage": 87.2345,
+            "server_name": "MyServer"
+        }
+    }
+}

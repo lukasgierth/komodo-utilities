@@ -1,0 +1,11 @@
+{
+    "level": "WARNING",
+    "data": {
+        "type": "ServerMem",
+        "data": {
+            "used_gb": 3.1766,
+            "total_gb": 3.966,
+            "server_name": "MyServer"
+        }
+    }
+}
