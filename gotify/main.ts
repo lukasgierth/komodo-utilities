@@ -1,5 +1,6 @@
 import { Types } from "npm:komodo_client";
 import { gotify } from "npm:gotify@1.1.0";
+import { formatNumber } from "../common/utils.ts";
 
 const GOTIFY_URL: string = Deno.env.get("GOTIFY_URL") as string;
 if (GOTIFY_URL === undefined || GOTIFY_URL.trim() === "") {
@@ -72,14 +73,14 @@ async function handle_alert(alert: Types.Alert) {
 
             switch (type) {
                 case "ServerCpu":
-                    message.push(`Hit ${data.percentage}%`);
+                    message.push(`Hit ${formatNumber(data.percentage, {max: 0})}%`);
                     break;
                 case "ServerMem":
-                    message.push(`Used ${data.used_gb}/${data.total_gb}GB`);
+                    message.push(`Used ${formatNumber(data.used_gb)}/${formatNumber(data.total_gb)}GB`);
                     break;
                 case "ServerDisk":
                     message.push(
-                        `Disk at ${data.path} used ${data.used_gb}/${data.total_gb}GB`,
+                        `Disk at ${data.path} used ${formatNumber(data.used_gb)}/${formatNumber(data.total_gb)}GB`,
                     );
                     break;
                 case "StackImageUpdateAvailable":
