@@ -2,6 +2,7 @@ import { Types } from "npm:komodo_client";
 import { gotify } from "npm:gotify@1.1.0";
 import { CommonAlert, parseAlert } from "../common/alertParser.ts";
 import { titleAndSubtitle } from "../common/notifierBuilder.ts";
+import { valToBoolean } from "../../common/utils.ts";
 
 const GOTIFY_URL: string = Deno.env.get("GOTIFY_URL") as string;
 if (GOTIFY_URL === undefined || GOTIFY_URL.trim() === "") {
@@ -43,6 +44,14 @@ for (const [level, defaultPriority] of Object.entries(severityLevelPriority)) {
     );
 }
 
+let levelInTitle: boolean | undefined;
+try {
+    levelInTitle = valToBoolean(Deno.env.get('LEVEL_IN_TITLE'));
+} catch (e) {
+    console.warn('Could not parse LEVEL_IN_TITLE to a truthy value, will use notifier default', {cause: e});
+}
+
+
 const pushAlert = async (title: string, message: string, priority: number): Promise<any> => {
     try {
         await gotify({
@@ -66,7 +75,7 @@ Deno.serve({ port: 7000 }, async (req) => {
     let data: CommonAlert;
 
     try {
-        data = parseAlert(alert);
+        data = parseAlert(alert, {levelInTitle});
     } catch (e) {
         console.error(e);
         return new Response();

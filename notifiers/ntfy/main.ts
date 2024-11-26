@@ -2,6 +2,7 @@ import { Types } from "npm:komodo_client";
 import { Config, publish } from "npm:ntfy@1.7.0";
 import { CommonAlert, parseAlert } from "../common/alertParser.ts";
 import { titleAndSubtitle } from "../common/notifierBuilder.ts";
+import { valToBoolean } from "../../common/utils.ts";
 
 
 const NTFY_URL: string = Deno.env.get("NTFY_URL") as string;
@@ -67,6 +68,13 @@ for (const [level, defaultPriority] of Object.entries(severityLevelPriority)) {
     );
 }
 
+let levelInTitle: boolean | undefined;
+try {
+    levelInTitle = valToBoolean(Deno.env.get('LEVEL_IN_TITLE'));
+} catch (e) {
+    console.warn('Could not parse LEVEL_IN_TITLE to a truthy value, will use notifier default', {cause: e});
+}
+
 const pushAlert = async (title: string, message: string, priority: number): Promise<any> => {
     try {
         const req: Config = {
@@ -99,7 +107,7 @@ Deno.serve({ port: 7000 }, async (req) => {
     let data: CommonAlert;
 
     try {
-        data = parseAlert(alert);
+        data = parseAlert(alert, {levelInTitle});
     } catch (e) {
         console.error(e);
         return new Response();
