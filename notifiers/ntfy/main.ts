@@ -76,14 +76,14 @@ try {
 }
 
 const pushAlert = async (title: string, message: string, priority: number): Promise<any> => {
+    const req: Config = {
+        message: message,
+        topic: NTFY_TOPIC,
+        title: title,
+        server: NTFY_URL,
+        priority: priority,
+    };
     try {
-        const req: Config = {
-            message: message,
-            topic: NTFY_TOPIC,
-            title: title,
-            server: NTFY_URL,
-            priority: priority,
-        };
         if(NTFY_USER !== undefined && NTFY_PASSWORD !== undefined) {
             req.authorization = {
                 username: NTFY_USER,
@@ -94,6 +94,16 @@ const pushAlert = async (title: string, message: string, priority: number): Prom
         }
         await publish(req);
     } catch (e) {
+        const redacted = req;
+        if(redacted.authorization !== undefined) {
+            if(typeof redacted.authorization === 'string') {
+                redacted.authorization = `XXX${redacted.authorization.substring(redacted.authorization.length - 3)}`
+            } else {
+                redacted.authorization.username = `XXX${redacted.authorization.username.substring(redacted.authorization.username.length - 3)}`
+                redacted.authorization.password = `XXX${redacted.authorization.password.substring(redacted.authorization.password.length - 3)}`
+            }
+        }
+        console.debug('ntfy payload:', redacted);
         throw new Error("Error occurred while trying to push to ntfy", {
             cause: e,
         });
@@ -114,6 +124,7 @@ Deno.serve({ port: 7000 }, async (req) => {
     }
 
     pushAlert(titleAndSubtitle(data), data.message ?? '', severityLevelPriority[alert.level]).catch((e) => {
+        console.debug('Komodo Alert Payload:', alert);
         console.error(
             new Error("Failed to push Alert to ntfy", { cause: e }),
         );

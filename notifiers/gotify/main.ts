@@ -53,15 +53,17 @@ try {
 
 
 const pushAlert = async (title: string, message: string, priority: number): Promise<any> => {
+    const payload: Parameters<typeof gotify>[0] = {
+        server: GOTIFY_URL,
+        app: GOTIFY_APP_TOKEN,
+        title: title,
+        message: message,
+        priority: priority,
+    };
     try {
-        await gotify({
-            server: GOTIFY_URL,
-            app: GOTIFY_APP_TOKEN,
-            title: title,
-            message: message,
-            priority: priority,
-        });
+        await gotify(payload);
     } catch (e) {
+        console.debug('Gotify Payload', {...payload, app: `XXX...${GOTIFY_APP_TOKEN.substring(GOTIFY_APP_TOKEN.length - 3)}`});
         throw new Error("Error occurred while trying to push to Gotify", {
             cause: e,
         });
@@ -77,11 +79,13 @@ Deno.serve({ port: 7000 }, async (req) => {
     try {
         data = parseAlert(alert, {levelInTitle});
     } catch (e) {
+        console.debug('Komodo Alert Payload:', alert);
         console.error(e);
         return new Response();
     }
 
     pushAlert(titleAndSubtitle(data), data.message ?? '', severityLevelPriority[alert.level]).catch((e) => {
+        console.debug('Komodo Alert Payload:', alert);
         console.error(
             new Error("Failed to push Alert to Gotify", { cause: e }),
         );
