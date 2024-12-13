@@ -13,4 +13,7 @@ COPY common/ common/
 COPY notifiers/common/ notifiers/common/
 COPY notifiers/gotify/ notifiers/gotify/
 
+RUN deno install --entrypoint notifiers/gotify/main.ts
+RUN deno cache notifiers/gotify/main.ts
+
 CMD ["run", "--allow-net", "--allow-env", "notifiers/gotify/main.ts"]
