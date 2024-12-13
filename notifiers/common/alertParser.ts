@@ -1,6 +1,5 @@
 import { Types } from "npm:komodo_client";
 import { formatNumber } from "../../common/utils.ts";
-import { italic } from "../../../../home/node/.cache/deno/npm/registry.npmjs.org/@discordeno/utils/19.0.0/dist/types/colors.d.ts";
 
 export interface CommonAlert {
     title: string;
