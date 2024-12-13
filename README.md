@@ -11,3 +11,9 @@ An [Alerter](https://komo.do/docs/resources#alerter) that pushes to [Gotify](htt
 An [Alerter](https://komo.do/docs/resources#alerter) that pushes to [ntfy](https://ntfy.sh/)
 
 [See README](/notifiers/ntfy/README.md)
+
+## Discord Webhook Alerter
+
+An [Alerter](https://komo.do/docs/resources#alerter) that pushes to a [Discord Webhook](https://discordjs.guide/popular-topics/webhooks.html#what-is-a-webhook)
+
+[See README](/notifiers/discord/README.md)

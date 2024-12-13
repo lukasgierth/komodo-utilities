@@ -35,6 +35,38 @@
                 "--allow-env"
             ],
             "attachSimplePort": 9229
-        }
+        },
+        {
+            "request": "launch",
+            "name": "Launch Discord Alerter",
+            "type": "node",
+            "program": "${workspaceFolder}/notifiers/discord/main.ts",
+            "cwd": "${workspaceFolder}",
+            "envFile": "${workspaceFolder}/.env",
+            "runtimeExecutable": "/usr/local/bin/deno",
+            "runtimeArgs": [
+                "run",
+                "--inspect-wait",
+                "--allow-net",
+                "--allow-env"
+            ],
+            "attachSimplePort": 9229
+        },
+        {
+            "request": "launch",
+            "name": "Debug Test File",
+            "type": "node",
+            "program": "${file}",
+            "cwd": "${workspaceFolder}",
+            "envFile": "${workspaceFolder}/.env",
+            "runtimeExecutable": "/usr/local/bin/deno",
+            "runtimeArgs": [
+                "test",
+                "--inspect-wait",
+                "--allow-net",
+                "--allow-env"
+            ],
+            "attachSimplePort": 9229
+        },
     ]
 }
