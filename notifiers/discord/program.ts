@@ -1,102 +1,109 @@
 import { Types } from "npm:komodo_client";
-import { EmbedBuilder, WebhookClient } from 'npm:discord.js';
+import { EmbedBuilder, WebhookClient } from "npm:discord.js";
 import { CommonAlert, parseAlert } from "../common/alertParser.ts";
 import { valToBoolean } from "../../common/utils.ts";
-import path from 'node:path';
+import path from "node:path";
 
 const program = () => {
-
-const DISCORD_WEBHOOK: string = Deno.env.get("DISCORD_WEBHOOK") as string;
-if (DISCORD_WEBHOOK === undefined || DISCORD_WEBHOOK.trim() === "") {
-    console.error("DISCORD_WEBHOOK not defined in ENV");
-    Deno.exit(1);
-}
-
-console.log(`Webhook      : ${DISCORD_WEBHOOK}`);
-
-const hookParts = path.parse(DISCORD_WEBHOOK);
-const token = hookParts.name;
-const id = hookParts.dir.split('/').pop();
-
-if(id === undefined) {
-    console.error("Could not find ID in DISCORD_WEBHOOK. Is the webhook URL properly formed? https://discordjs.guide/popular-topics/webhooks.html#creating-webhooks-through-server-settings");
-    Deno.exit(1);
-}
-console.info(`Webhook ID   : ${id}`);
-if(token === undefined) {
-    console.error("Could not find token in DISCORD_WEBHOOK. Is the webhook URL properly formed? https://discordjs.guide/popular-topics/webhooks.html#creating-webhooks-through-server-settings");
-    Deno.exit(1);
-}
-console.info(`Webhook Token: ${token}`);
-
-let levelInTitle: boolean | undefined;
-try {
-    levelInTitle = valToBoolean(Deno.env.get('LEVEL_IN_TITLE'));
-} catch (e) {
-    console.warn('Could not parse LEVEL_IN_TITLE to a truthy value, will use notifier default', {cause: e});
-}
-
-
-const pushAlert = async (data: CommonAlert, level: Types.SeverityLevel): Promise<any> => {
-    const embed = new EmbedBuilder();
-    switch(level) {
-        case Types.SeverityLevel.Ok:
-            embed.setColor('#58b9ff');
-            break;
-        case Types.SeverityLevel.Warning:
-            embed.setColor('#fa8020');
-            break;
-        case Types.SeverityLevel.Critical:
-            embed.setColor('#fa2020');
-            break;
+    const DISCORD_WEBHOOK: string = Deno.env.get("DISCORD_WEBHOOK") as string;
+    if (DISCORD_WEBHOOK === undefined || DISCORD_WEBHOOK.trim() === "") {
+        console.error("DISCORD_WEBHOOK not defined in ENV");
+        Deno.exit(1);
     }
 
-    embed.setTitle(data.title);
-    if(data.subtitle !== undefined) {
-        embed.setDescription(data.subtitle);
-    }
-    if(data.message !== undefined) {
-        embed.addFields({name: 'Message', value: data.message});
-    }
+    console.log(`Webhook      : ${DISCORD_WEBHOOK}`);
 
-    const client = new WebhookClient({id, token});
-    try {
-        const msg = await client.send({
-            embeds: [embed]
-        });
-    } catch (e) {
-        throw new Error('Failed to send Discord Webhook', {cause: e})
-    }
-}
+    const hookParts = path.parse(DISCORD_WEBHOOK);
+    const token = hookParts.name;
+    const id = hookParts.dir.split("/").pop();
 
-const server = Deno.serve({ port: 7000 }, async (req) => {
-    const alert: Types.Alert = await req.json();
-    console.log(`Recieved data from ${req.headers.get("host")}...`);
-
-    let data: CommonAlert;
-
-    try {
-        data = parseAlert(alert, {levelInTitle, markdown: true});
-    } catch (e) {
-        console.debug('Komodo Alert Payload:', alert);
-        console.error(e);
-        return new Response();
-    }
-
-    try {
-        await pushAlert(data, alert.level)
-    } catch (e) {
-        console.debug('Komodo Alert Payload:', alert);
+    if (id === undefined) {
         console.error(
-            new Error("Failed to push Alert to Gotify", { cause: e }),
+            "Could not find ID in DISCORD_WEBHOOK. Is the webhook URL properly formed? https://discordjs.guide/popular-topics/webhooks.html#creating-webhooks-through-server-settings",
+        );
+        Deno.exit(1);
+    }
+    console.info(`Webhook ID   : ${id}`);
+    if (token === undefined) {
+        console.error(
+            "Could not find token in DISCORD_WEBHOOK. Is the webhook URL properly formed? https://discordjs.guide/popular-topics/webhooks.html#creating-webhooks-through-server-settings",
+        );
+        Deno.exit(1);
+    }
+    console.info(`Webhook Token: ${token}`);
+
+    let levelInTitle: boolean | undefined;
+    try {
+        levelInTitle = valToBoolean(Deno.env.get("LEVEL_IN_TITLE"));
+    } catch (e) {
+        console.warn(
+            "Could not parse LEVEL_IN_TITLE to a truthy value, will use notifier default",
+            { cause: e },
         );
     }
 
-    return new Response();
-});
+    const pushAlert = async (
+        data: CommonAlert,
+        level: Types.SeverityLevel,
+    ): Promise<any> => {
+        const embed = new EmbedBuilder();
+        switch (level) {
+            case Types.SeverityLevel.Ok:
+                embed.setColor("#58b9ff");
+                break;
+            case Types.SeverityLevel.Warning:
+                embed.setColor("#fa8020");
+                break;
+            case Types.SeverityLevel.Critical:
+                embed.setColor("#fa2020");
+                break;
+        }
 
-return server;
+        embed.setTitle(data.title);
+        if (data.subtitle !== undefined) {
+            embed.setDescription(data.subtitle);
+        }
+        if (data.message !== undefined) {
+            embed.addFields({ name: "Message", value: data.message });
+        }
 
-}
+        const client = new WebhookClient({ id, token });
+        try {
+            const msg = await client.send({
+                embeds: [embed],
+            });
+        } catch (e) {
+            throw new Error("Failed to send Discord Webhook", { cause: e });
+        }
+    };
 
-export {program};
+    const server = Deno.serve({ port: 7000 }, async (req) => {
+        const alert: Types.Alert = await req.json();
+        console.log(`Recieved data from ${req.headers.get("host")}...`);
+
+        let data: CommonAlert;
+
+        try {
+            data = parseAlert(alert, { levelInTitle, markdown: true });
+        } catch (e) {
+            console.debug("Komodo Alert Payload:", alert);
+            console.error(e);
+            return new Response();
+        }
+
+        try {
+            await pushAlert(data, alert.level);
+        } catch (e) {
+            console.debug("Komodo Alert Payload:", alert);
+            console.error(
+                new Error("Failed to push Alert to Gotify", { cause: e }),
+            );
+        }
+
+        return new Response();
+    });
+
+    return server;
+};
+
+export { program };

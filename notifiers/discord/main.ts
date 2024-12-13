@@ -1,3 +1,3 @@
-import {program} from './program.ts';
+import { program } from "./program.ts";
 
 program();
