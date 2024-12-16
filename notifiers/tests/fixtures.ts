@@ -95,3 +95,23 @@ export const StackImageUpdateAvailable: Types.Alert & {data: {type: "StackImageU
         }
     },
 };
+
+export const StackAutoUpdated: Types.Alert & {data: {type: "StackAutoUpdated"}} = {
+    level: Types.SeverityLevel.Ok,
+    ts: Date.now(),
+    resolved: true,
+    target: {
+        type: "Stack",
+        id: "675f2b0370fff236be04d528"
+    },
+    data: {
+        type: "StackAutoUpdated",
+        data: {
+            id: "675f2b0370fff236be04d528",
+            name: "MyStack",
+            server_id: "1234",
+            server_name: "MyServer",
+            images: [ "redacted/redacted:latest" ]
+        }
+    },
+};

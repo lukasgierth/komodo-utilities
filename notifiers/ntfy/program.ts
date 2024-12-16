@@ -136,7 +136,9 @@ const program = () => {
         try {
             await pushAlert(
                 titleAndSubtitle(data),
-                data.message ?? "",
+                // always return *something*
+                // ntfy throws an error if message is an empty string
+                data.message ?? data.title,
                 severityLevelPriority[alert.level],
             )
         } catch (e) {
