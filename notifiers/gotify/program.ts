@@ -2,7 +2,7 @@ import { Types } from "npm:komodo_client";
 import { gotify } from "npm:gotify@1.1.0";
 import { CommonAlert, parseAlert } from "../common/alertParser.ts";
 import { titleAndSubtitle } from "../common/notifierBuilder.ts";
-import { valToBoolean } from "../../common/utils.ts";
+import { alertResolvedAllowed, parseOptions } from "../common/options.ts";
 
 const program = () => {
     const GOTIFY_URL: string = Deno.env.get("GOTIFY_URL") as string;
@@ -47,15 +47,7 @@ const program = () => {
         );
     }
 
-    let levelInTitle: boolean | undefined;
-    try {
-        levelInTitle = valToBoolean(Deno.env.get("LEVEL_IN_TITLE"));
-    } catch (e) {
-        console.warn(
-            "Could not parse LEVEL_IN_TITLE to a truthy value, will use notifier default",
-            { cause: e },
-        );
-    }
+    const commonOpts = parseOptions();
 
     const pushAlert = async (
         title: string,
@@ -91,10 +83,15 @@ const program = () => {
         let data: CommonAlert;
 
         try {
-            data = parseAlert(alert, { levelInTitle });
+            data = parseAlert(alert, commonOpts);
         } catch (e) {
             console.debug("Komodo Alert Payload:", alert);
             console.error(e);
+            return new Response();
+        }
+
+        if(!alertResolvedAllowed(commonOpts.allowedResolveTypes, alert.resolved)) {
+            console.debug(`Not pushing alert because Alert is ${alert.resolved ? 'resolved' : 'unresolved'} which is not included in allowed resolved types of '${commonOpts.allowedResolveTypes}'`);
             return new Response();
         }
 

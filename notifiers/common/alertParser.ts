@@ -1,5 +1,6 @@
 import { Types } from "npm:komodo_client";
 import { formatNumber } from "../../common/utils.ts";
+import { CommonOptions } from "./options.ts";
 
 export interface CommonAlert {
     title: string;
@@ -10,8 +11,7 @@ export interface CommonAlert {
 export interface RichAlert extends CommonAlert {
 }
 
-export interface ParsingOptions {
-    levelInTitle?: boolean;
+export interface ParsingOptions extends CommonOptions {
     markdown?: boolean
 }
 
@@ -51,10 +51,16 @@ export const parseAlert = <T extends Alert = CommonAlert>(
 ): T => {
     const {
         levelInTitle = true,
+        resolvedIndicator = true,
         markdown = false,
     } = options;
 
     const {
+        resolved = false,
+        target: {
+            type: targetType,
+            id: targetId
+        },
         data: {
             type,
             data,
@@ -64,6 +70,10 @@ export const parseAlert = <T extends Alert = CommonAlert>(
     const formatter = formatting(markdown);
 
     const message: string[] = [];
+    if(resolvedIndicator && resolved) {
+        // checkmark box
+        message.push('✅');
+    }
     const title: string[] = [];
     const subtitle: string[] = [];
 
@@ -110,13 +120,19 @@ export const parseAlert = <T extends Alert = CommonAlert>(
                         `Service ${formatter.bold(data.service)} | Image ${formatter.bold(data.image)}`,
                     );
                     break;
+                case "DeploymentAutoUpdated":
+                    message.push(`Updated ${formatter.bold(data.image)}`);
+                    break;
                 case "DeploymentImageUpdateAvailable":
-                    message.push(`Image ${formatter.bold(data.image)}`);
+                    message.push(formatter.bold(data.image));
                     break;
                 case "AwsBuilderTerminationFailed":
                     message.push(
                         `Instance ${formatter.bold(data.instance_id)} | Reason: ${formatter.bold(data.message)}`,
                     );
+                    break;
+                case "StackAutoUpdated":
+                    message.push(`Updated ${data.images.map(x => formatter.bold(x)).join(' | ')}`);
                     break;
                 case "None":
                     break;
@@ -156,7 +172,8 @@ export const parseAlert = <T extends Alert = CommonAlert>(
             `== Alert Summary ==
 Title    : ${titleStr}
 Subtitle : ${subtitleStr}
-Message  : ${messageStr}`,
+Message  : ${messageStr}
+Resolved : ${resolved ? 'True' : 'False'}`,
         );
     }
 };

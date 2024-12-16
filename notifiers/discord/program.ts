@@ -1,8 +1,8 @@
 import { Types } from "npm:komodo_client";
 import { EmbedBuilder, WebhookClient } from "npm:discord.js";
 import { CommonAlert, parseAlert } from "../common/alertParser.ts";
-import { valToBoolean } from "../../common/utils.ts";
 import path from "node:path";
+import { alertResolvedAllowed, parseOptions } from "../common/options.ts";
 
 const program = () => {
     const DISCORD_WEBHOOK: string = Deno.env.get("DISCORD_WEBHOOK") as string;
@@ -32,15 +32,7 @@ const program = () => {
     }
     console.info(`Webhook Token: ${token}`);
 
-    let levelInTitle: boolean | undefined;
-    try {
-        levelInTitle = valToBoolean(Deno.env.get("LEVEL_IN_TITLE"));
-    } catch (e) {
-        console.warn(
-            "Could not parse LEVEL_IN_TITLE to a truthy value, will use notifier default",
-            { cause: e },
-        );
-    }
+    const commonOpts = parseOptions();
 
     const pushAlert = async (
         data: CommonAlert,
@@ -84,10 +76,15 @@ const program = () => {
         let data: CommonAlert;
 
         try {
-            data = parseAlert(alert, { levelInTitle, markdown: true });
+            data = parseAlert(alert, { ...commonOpts, markdown: true });
         } catch (e) {
             console.debug("Komodo Alert Payload:", alert);
             console.error(e);
+            return new Response();
+        }
+
+        if(!alertResolvedAllowed(commonOpts.allowedResolveTypes, alert.resolved)) {
+            console.debug(`Not pushing alert because Alert is ${alert.resolved ? 'resolved' : 'unresolved'} which is not included in allowed resolved types of '${commonOpts.allowedResolveTypes}'`);
             return new Response();
         }
 

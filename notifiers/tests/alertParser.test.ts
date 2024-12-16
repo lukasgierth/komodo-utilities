@@ -47,3 +47,27 @@ Deno.test({
     expect(parseAlert(ServerCPU).title).toContain(`[${ServerCPU.level}]`);
   },
 });
+
+Deno.test({
+  name: "Adds resolved checkbox when resolvedIndicator is true and resolved is true",
+  fn() {
+    const data = parseAlert(ServerDisk, {resolvedIndicator: true});
+    expect(data.message).toContain('✅');
+  },
+});
+
+Deno.test({
+  name: "Does not add resolved checkbox when resolvedIndicator is true and resolved is false",
+  fn() {
+    const data = parseAlert({...ServerDisk, resolved: false}, {resolvedIndicator: true});
+    expect(data.message).not.toContain('✅');
+  },
+});
+
+Deno.test({
+  name: "Does not add resolved checkbox when resolvedIndicator is false",
+  fn() {
+    const data = parseAlert(ServerDisk, {resolvedIndicator: false});
+    expect(data.message).not.toContain('✅');
+  },
+});
