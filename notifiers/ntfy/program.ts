@@ -92,7 +92,7 @@ const program = () => {
                     password: NTFY_PASSWORD,
                 };
             } else if (NTFY_TOKEN !== undefined) {
-                req.authorization = NTFY_TOKEN;
+                req.authorization = `Bearer ${NTFY_TOKEN}`;
             }
             await publish(req);
         } catch (e) {
