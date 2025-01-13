@@ -6,6 +6,9 @@ import { nonEmptyStringOrDefault, normalizeWebAddress, parseArrayFromMaybeString
 import { isPortReachable, joinedUrl } from "../common/networkUtils.ts";
 import { titleAndSubtitle } from "../common/notifierBuilder.ts";
 import { valToBoolean } from "../../common/utils.ts";
+import { setTimeout } from "node:timers";
+import { createNotifierPipe } from "../common/notifierUtils.ts";
+
 
 interface AppriseOptions {
     endpoint: URLData
@@ -201,6 +204,19 @@ const program = async () => {
         }
     };
 
+    const doAlert = async (data: CommonAlert, alert: Types.Alert) => {
+        try {
+            await pushAlert(data, alert.level);
+        } catch (e) {
+            console.debug("Komodo Alert Payload:", alert);
+            console.error(
+                new Error("Failed to push Alert to Apprise", { cause: e }),
+            );
+        }
+    }
+
+    const notifierPipe = createNotifierPipe(commonOpts);
+
     const server = Deno.serve({ port: 7000 }, async (req) => {
         const alert: Types.Alert = await req.json();
         console.log(`Recieved data from ${req.headers.get("host")}...`);
@@ -215,19 +231,7 @@ const program = async () => {
             return new Response();
         }
 
-        if(!alertResolvedAllowed(commonOpts.allowedResolveTypes, alert.resolved)) {
-            console.debug(`Not pushing alert because Alert is ${alert.resolved ? 'resolved' : 'unresolved'} which is not included in allowed resolved types of '${commonOpts.allowedResolveTypes}'`);
-            return new Response();
-        }
-
-        try {
-            await pushAlert(data, alert.level);
-        } catch (e) {
-            console.debug("Komodo Alert Payload:", alert);
-            console.error(
-                new Error("Failed to push Alert to Apprise", { cause: e }),
-            );
-        }
+        await notifierPipe(alert, () => doAlert(data, alert))
 
         return new Response();
     });

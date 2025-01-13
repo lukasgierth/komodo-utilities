@@ -3,7 +3,7 @@ import { ServerMem, StackImageUpdateAvailable, StackAutoUpdated } from "../tests
 import { program } from "../ntfy/program.ts";
 
 Deno.test({
-  name: "Ntfy - run memory alert",
+  name: "Ntfy - run cpu alert",
   async fn() {
     const server = program();
     try {

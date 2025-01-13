@@ -1,11 +1,15 @@
+import { Types } from "npm:komodo_client";
 import { valToBoolean } from "../../common/utils.ts";
 
 export type ResolvedType = "resolved" | "unresolved";
+export type AlertTypes = Types.Alert['data']['type'];
 
 export interface CommonOptions {
     levelInTitle?: boolean;
     resolvedIndicator?: boolean;
     allowedResolveTypes?: ResolvedType[];
+    resolverTimeout?: number
+    resolverTypes?: AlertTypes[]
 }
 
 export const asResolvedType = (val: string): val is ResolvedType => {
@@ -17,6 +21,8 @@ export const parseOptions = (data: CommonOptions = {}) => {
         levelInTitle: lit,
         resolvedIndicator: ri,
         allowedResolveTypes: fr,
+        resolverTypes: rt,
+        resolverTimeout: rtime,
     } = data;
 
     let levelInTitle = lit;
@@ -56,10 +62,39 @@ export const parseOptions = (data: CommonOptions = {}) => {
             }
         }
     }
+
+    let resolverTypes = rt;
+    if (resolverTypes === undefined) {
+        const types = Deno.env.get("UNRESOLVED_TIMEOUT_TYPES");
+        if(types === undefined || types.trim() === '') {
+            resolverTypes = undefined;
+        } else {
+            try {
+                resolverTypes = parseAlertTypesString(types);
+            } catch (e) {
+                throw new Error(`Could not parse 'UNRESOLVED_TIMEOUT_TYPES' ENV`, {cause: e});
+            }
+        }
+    }
+
+    let resolverTimeout = rtime;
+    if (resolverTimeout === undefined) {
+        const timeVal = Deno.env.get("UNRESOLVED_TIMEOUT");
+        if(timeVal !== undefined) {
+            const time = Number.parseInt(timeVal);
+            if(Number.isNaN(time)) {
+                throw new Error(`Could not parse 'UNRESOLVED_TIMEOUT' ENV as a number`);
+            }
+            resolverTimeout = time;
+        }
+    }
+
     return {
         levelInTitle,
         resolvedIndicator,
-        allowedResolveTypes
+        allowedResolveTypes,
+        resolverTypes,
+        resolverTimeout
     }
 };
 
@@ -92,4 +127,17 @@ export const alertResolvedAllowed = (types: undefined | ResolvedType[], alertRes
     }
     const allowedTruthyVals = resolvedTypesToVal(types);
     return allowedTruthyVals.includes(alertResolved);
+}
+
+export const parseAlertTypesString = (str: string): AlertTypes[] => {
+    let types: AlertTypes[] = [];
+
+    const splitTypes = str.split(',').map(x => x.trim().toLocaleLowerCase());
+    // TODO don't have a good way to generate types from TS and don't want to handcode
+    // const badTypes = splitTypes.filter(x => !asResolvedType(x));
+    // if(badTypes.length > 0) {
+    //     throw new Error(`Invalid resolve types found, values must be either 'resolved' or 'unresolved'. Invalid found: ${badTypes.join(',')}`);
+    // }
+    types = Array.from(new Set(splitTypes)) as AlertTypes[];
+    return types;
 }

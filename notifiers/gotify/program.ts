@@ -2,7 +2,8 @@ import { Types } from "npm:komodo_client";
 import { gotify } from "npm:gotify@1.1.0";
 import { CommonAlert, parseAlert } from "../common/alertParser.ts";
 import { titleAndSubtitle } from "../common/notifierBuilder.ts";
-import { alertResolvedAllowed, parseOptions } from "../common/options.ts";
+import { parseOptions } from "../common/options.ts";
+import { createNotifierPipe } from "../common/notifierUtils.ts";
 
 const program = () => {
     const GOTIFY_URL: string = Deno.env.get("GOTIFY_URL") as string;
@@ -76,6 +77,24 @@ const program = () => {
         }
     };
 
+    const doAlert = async (data: CommonAlert, alert: Types.Alert) => {
+        try {
+            await pushAlert(
+                titleAndSubtitle(data),
+                data.message ?? "",
+                severityLevelPriority[alert.level],
+            );
+        } catch (e) {
+            console.debug("Komodo Alert Payload:", alert);
+            console.error(
+                new Error("Failed to push Alert to Gotify", { cause: e }),
+            );
+        }
+
+    }
+
+        const notifierPipe = createNotifierPipe(commonOpts);
+
     return Deno.serve({ port: 7000 }, async (req) => {
         const alert: Types.Alert = await req.json();
         console.log(`Recieved data from ${req.headers.get("host")}...`);
@@ -90,23 +109,7 @@ const program = () => {
             return new Response();
         }
 
-        if(!alertResolvedAllowed(commonOpts.allowedResolveTypes, alert.resolved)) {
-            console.debug(`Not pushing alert because Alert is ${alert.resolved ? 'resolved' : 'unresolved'} which is not included in allowed resolved types of '${commonOpts.allowedResolveTypes}'`);
-            return new Response();
-        }
-
-        try {
-            await pushAlert(
-                titleAndSubtitle(data),
-                data.message ?? "",
-                severityLevelPriority[alert.level],
-            );
-        } catch (e) {
-            console.debug("Komodo Alert Payload:", alert);
-            console.error(
-                new Error("Failed to push Alert to Gotify", { cause: e }),
-            );
-        }
+        await notifierPipe(alert, () => doAlert(data, alert))
 
         return new Response();
     });

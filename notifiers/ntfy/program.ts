@@ -2,7 +2,8 @@ import { Types } from "npm:komodo_client";
 import { Config, publish } from "npm:ntfy@1.7.0";
 import { CommonAlert, parseAlert } from "../common/alertParser.ts";
 import { titleAndSubtitle } from "../common/notifierBuilder.ts";
-import { alertResolvedAllowed, parseOptions } from "../common/options.ts";
+import { parseOptions } from "../common/options.ts";
+import { createNotifierPipe } from "../common/notifierUtils.ts";
 
 const program = () => {
 
@@ -112,24 +113,8 @@ const program = () => {
         }
     };
 
-    return Deno.serve({ port: 7000 }, async (req) => {
-        const alert: Types.Alert = await req.json();
-        console.log(`Recieved data from ${req.headers.get("host")}...`);
 
-        let data: CommonAlert;
-
-        try {
-            data = parseAlert(alert, commonOpts);
-        } catch (e) {
-            console.error(e);
-            return new Response();
-        }
-
-        if(!alertResolvedAllowed(commonOpts.allowedResolveTypes, alert.resolved)) {
-            console.debug(`Not pushing alert because Alert is ${alert.resolved ? 'resolved' : 'unresolved'} which is not included in allowed resolved types of '${commonOpts.allowedResolveTypes}'`);
-            return new Response();
-        }
-
+    const doAlert = async (data: CommonAlert, alert: Types.Alert) => {
         try {
             await pushAlert(
                 titleAndSubtitle(data),
@@ -144,6 +129,24 @@ const program = () => {
                 new Error("Failed to push Alert to ntfy", { cause: e }),
             );
         }
+    }
+
+    const notifierPipe = createNotifierPipe(commonOpts);
+
+    return Deno.serve({ port: 7000 }, async (req) => {
+        const alert: Types.Alert = await req.json();
+        console.log(`Recieved data from ${req.headers.get("host")}...`);
+
+        let data: CommonAlert;
+
+        try {
+            data = parseAlert(alert, commonOpts);
+        } catch (e) {
+            console.error(e);
+            return new Response();
+        }
+
+        await notifierPipe(alert, () => doAlert(data, alert))
 
         return new Response();
     });
