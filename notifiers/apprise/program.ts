@@ -5,12 +5,14 @@ import { URLData } from "../common/atomic.ts";
 import { nonEmptyStringOrDefault, normalizeWebAddress, parseArrayFromMaybeString, truncateStringToLength } from "../common/stringUtils.ts";
 import { isPortReachable, joinedUrl } from "../common/networkUtils.ts";
 import { titleAndSubtitle } from "../common/notifierBuilder.ts";
+import { valToBoolean } from "../../common/utils.ts";
 
 interface AppriseOptions {
     endpoint: URLData
     urls: string[]
     keys: string[]
     tag?: string
+    markdown?: boolean
 }
 
 const upstreamFailureHint = 'HINT: Status 424 means a dependency upstream of Apprise failed. This is usually a connection or authentication issue. Check Apprise logs to see more details.';
@@ -18,6 +20,8 @@ const upstreamFailureHint = 'HINT: Status 424 means a dependency upstream of App
 const shortKey = truncateStringToLength(10);
 
 const parseAppriseOptions = async (): Promise<AppriseOptions> => {
+
+    const markdown = valToBoolean(Deno.env.get("MARKDOWN"));
 
     const host = nonEmptyStringOrDefault(Deno.env.get("APPRISE_HOST") as string);
 
@@ -64,7 +68,7 @@ const parseAppriseOptions = async (): Promise<AppriseOptions> => {
          }
      }
 
-     return {endpoint, urls, keys, tag};
+     return {endpoint, urls, keys, tag, markdown};
 }
 
 const callApi = async (req: Request): Promise<Response> => {
@@ -204,7 +208,7 @@ const program = async () => {
         let data: CommonAlert;
 
         try {
-            data = parseAlert(alert, { ...commonOpts });
+            data = parseAlert(alert, { ...commonOpts, markdown: appriseOptions.markdown });
         } catch (e) {
             console.debug("Komodo Alert Payload:", alert);
             console.error(e);
