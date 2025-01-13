@@ -3,7 +3,7 @@ import { alertResolvedAllowed, CommonOptions } from "./options.ts";
 import { Types } from "npm:komodo_client";
 import { isAlertType, resolveableAlertIdentifier } from "./alertUtils.ts";
 
-const alertFriendly = (alert: Types.Alert): string => `Alert ${alert._id} for ${alert.target.id}-${alert.data.type}`;
+const alertFriendly = (alert: Types.Alert): string => `Alert ${alert._id?.$oid} for ${alert.target.id}-${alert.data.type}`;
 
 export const createNotifierPipe = (opts: CommonOptions) => {
 
@@ -33,7 +33,7 @@ export const createNotifierPipe = (opts: CommonOptions) => {
             // if we had a waiting unresolved then the assumption is we *do not* want to notify of the resolved status
             // since it was transient
             if(resolverTimeouts.has(id)) {
-                console.debug(`Not pushing ${alertFriendly(alert)} because it is RESOVLED and had an UNRESOLVED notification that was wait waiting to be pushed (and has now been canceled).`)
+                console.debug(`Not pushing ${alertFriendly(alert)} because it is RESOVLED and had an UNRESOLVED notification that was waiting to be pushed (and has now been canceled).`)
                 clearTimeout(resolverTimeouts.get(id));
                 resolverTimeouts.delete(id);
                 return;
