@@ -3,7 +3,7 @@ name = "find_ip"
 [action.config]
 file_contents = """
 const IP_LIKE = '172.16.10';
-// set to true to find ALL that match, otherwise exits after first found
+// set to false to find ALL that match, otherwise exits after first found
 const FIND_ONE = true;
 
 let foundAny = false;
