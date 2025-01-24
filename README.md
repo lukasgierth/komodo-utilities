@@ -32,7 +32,7 @@ An [Alerter](https://komo.do/docs/resources#alerter) that pushes to [Apprise](ht
 
 [Find one or many Containers by IP or Gateway address.](/actions/find_ip.toml)
 
-Accepts a string to find within the address so it works for finding partial IPs or subnets.
+Accepts a comma-delimited list of strings to find within the address so it works for finding partial IPs or subnets.
 
 Output contains Server, Stack, Container, and Network where it was found:
 

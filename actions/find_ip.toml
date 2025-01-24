@@ -2,43 +2,54 @@
 name = "find_ip"
 [action.config]
 file_contents = """
-const IP_LIKE = '172.16.10';
-// set to false to find ALL that match, otherwise exits after first found
-const FIND_ONE = true;
+const IP_LIKE = '172.16.10,172.20.0.2';
+
+const IP_LIKE_VALS = IP_LIKE.split(',').map(x => x.trim());
+
+type ContextualContainer = {server: string, container: Types.Container };
 
 let foundAny = false;
 
 const servers: Types.ListServersResponse = await komodo.read('ListServers', {});
+const serverMap: Record<string, Types.ServerListItem> = servers.reduce((acc, curr) => ({...acc, [curr.id]: curr}), {});
 
-for(const s of servers) {
+// could do filtering during promise execution
+// but for re-useability, extensibility, and completeness sake, keep all data intact and foreach after retriving everything
+// (even if doing filtering during promise we'd still be fetching all data so it doesn't decrease execution time significantly)
+const data: ContextualContainer[] = (await Promise.all(servers.map(async (s) => 
+{
   const containers = await komodo.read('ListDockerContainers', {server: s.id});
-  for(const c of containers) {
-    const inspect = await komodo.read('InspectDockerContainer', {server: s.id, container: c.id});
-    if(inspect.NetworkSettings.Networks !== undefined) {
+
+  const containerInfos = await Promise.all(containers.map(async (c) => {
+     const container =  await komodo.read('InspectDockerContainer', {server: s.id, container: c.id});
+     return {server: s.id, container};
+  }));
+
+  return containerInfos;
+
+}))).flat();
+
+for(const cInfo of data) {
+  const {server, container} = cInfo;
+
+      if(container.NetworkSettings.Networks !== undefined) {
       const found: string[] = [];
-      for(const [network, v] of Object.entries(inspect.NetworkSettings.Networks)) {
-        if(v.Gateway.includes(IP_LIKE)) {
+      for(const [network, v] of Object.entries(container.NetworkSettings.Networks)) {
+        if(IP_LIKE_VALS.some(x => v.Gateway.includes(x))) {
           found.push(`Gateway ${v.Gateway} in Network ${network}`);
         }
-        if(v.IPAddress.includes(IP_LIKE)) {
+        if(IP_LIKE_VALS.some(x => v.IPAddress.includes(x))) {
           found.push(`IP ${v.IPAddress} in Network ${network}`);
         }
       }
         if(found.length > 0) {
-          console.log(`Server ${s.name} -> Container ${c.name} has ${found.join(', ')}`);
+          console.log(`Server ${serverMap[server].name} -> Container ${container.Name.substring(1)} has ${found.join(', ')}`);
           foundAny = true;
       }
     }
-    if(foundAny && FIND_ONE) {
-      break;
-    }
-  }
-  if(foundAny && FIND_ONE) {
-    break;
-  }
 }
 
 if(!foundAny) {
-  console.log(`Did not find Gatways or IP Addresses containing ${IP_LIKE}`);
+  console.log(`Did not find Gateways or IP Addresses containing ${IP_LIKE_VALS.join(' or ')}`);
 }
 """
