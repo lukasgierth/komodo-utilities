@@ -6,50 +6,49 @@ const IP_LIKE = '172.16.10,172.20.0.2';
 
 const IP_LIKE_VALS = IP_LIKE.split(',').map(x => x.trim());
 
-type ContextualContainer = {server: string, container: Types.Container };
+type ContextualContainer = { server: string, container: Types.Container };
 
 let foundAny = false;
 
 const servers: Types.ListServersResponse = await komodo.read('ListServers', {});
-const serverMap: Record<string, Types.ServerListItem> = servers.reduce((acc, curr) => ({...acc, [curr.id]: curr}), {});
+const serverMap: Record<string, Types.ServerListItem> = servers.reduce((acc, curr) => ({ ...acc, [curr.id]: curr }), {});
 
 // could do filtering during promise execution
 // but for re-useability, extensibility, and completeness sake, keep all data intact and foreach after retriving everything
 // (even if doing filtering during promise we'd still be fetching all data so it doesn't decrease execution time significantly)
-const data: ContextualContainer[] = (await Promise.all(servers.map(async (s) => 
-{
-  const containers = await komodo.read('ListDockerContainers', {server: s.id});
+const data: ContextualContainer[] = (await Promise.all(servers.map(async (s) => {
+  const containers = await komodo.read('ListDockerContainers', { server: s.id });
 
   const containerInfos = await Promise.all(containers.map(async (c) => {
-     const container =  await komodo.read('InspectDockerContainer', {server: s.id, container: c.id});
-     return {server: s.id, container};
+    const container = await komodo.read('InspectDockerContainer', { server: s.id, container: c.id });
+    return { server: s.id, container };
   }));
 
   return containerInfos;
 
 }))).flat();
 
-for(const cInfo of data) {
-  const {server, container} = cInfo;
+for (const cInfo of data) {
+  const { server, container } = cInfo;
 
-      if(container.NetworkSettings.Networks !== undefined) {
-      const found: string[] = [];
-      for(const [network, v] of Object.entries(container.NetworkSettings.Networks)) {
-        if(IP_LIKE_VALS.some(x => v.Gateway.includes(x))) {
-          found.push(`Gateway ${v.Gateway} in Network ${network}`);
-        }
-        if(IP_LIKE_VALS.some(x => v.IPAddress.includes(x))) {
-          found.push(`IP ${v.IPAddress} in Network ${network}`);
-        }
+  if (container.NetworkSettings.Networks !== undefined) {
+    const found: string[] = [];
+    for (const [network, v] of Object.entries(container.NetworkSettings.Networks)) {
+      if (IP_LIKE_VALS.some(x => v.Gateway.includes(x))) {
+        found.push(`Gateway ${v.Gateway} in Network ${network}`);
       }
-        if(found.length > 0) {
-          console.log(`Server ${serverMap[server].name} -> Container ${container.Name.substring(1)} has ${found.join(', ')}`);
-          foundAny = true;
+      if (IP_LIKE_VALS.some(x => v.IPAddress.includes(x))) {
+        found.push(`IP ${v.IPAddress} in Network ${network}`);
       }
     }
+    if (found.length > 0) {
+      console.log(`Server ${serverMap[server].name} -> Container ${container.Name.substring(1)} has ${found.join(', ')}`);
+      foundAny = true;
+    }
+  }
 }
 
-if(!foundAny) {
+if (!foundAny) {
   console.log(`Did not find Gateways or IP Addresses containing ${IP_LIKE_VALS.join(' or ')}`);
 }
 """
