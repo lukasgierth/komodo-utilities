@@ -3,12 +3,20 @@ import normalizeUrl from "npm:normalize-url@8.0.1";
 import { URLData } from "./atomic.ts";
 
 const QUOTES_UNWRAP_REGEX: RegExp = new RegExp(/^"(.*)"$/);
+// domain:port/path (:port is optional)
+const NON_PROTOCOL_DOMAIN_REGEX: RegExp = new RegExp(/^[a-zA-Z0-9-]+(:[0-9]+)?(\/[^\/].*)?$/);
 
 export const normalizeWebAddress = (val: string): URLData => {
     let cleanUserUrl = val.trim();
     const results = parseRegexSingle(QUOTES_UNWRAP_REGEX, val);
     if (results !== undefined && results.groups && results.groups.length > 0) {
         cleanUserUrl = results.groups[0];
+    }
+    const nonProto = parseRegexSingle(NON_PROTOCOL_DOMAIN_REGEX, cleanUserUrl);
+    if(nonProto !== undefined) {
+        // url does not have protocol or TLD, need to add protocol so URL constructor doesn't try to use domain as protocol
+        // correct protocol should be determined by code below
+        cleanUserUrl = `http://${cleanUserUrl}`;
     }
 
     let normal = normalizeUrl(cleanUserUrl, {removeTrailingSlash: true});
